@@ -1,0 +1,36 @@
+Datos recibidos: Array
+(
+    [accion] => actualizar
+    [id] => 2
+    [nombre] => testDoe
+    [especialidad] => Corte
+)
+
+Ejecutando UPDATE para ID: 2, Nombre: testDoe, Especialidad: Corte
+Datos recibidos: Array
+(
+    [accion] => actualizar
+    [id] => 2
+    [nombre] => testDoe
+    [especialidad] => Corte
+)
+
+Ejecutando UPDATE para ID: 2, Nombre: testDoe, Especialidad: Corte
+Datos recibidos: Array
+(
+    [accion] => actualizar
+    [id] => 2
+    [nombre] => testDoe
+    [especialidad] => Cortes
+)
+
+Ejecutando UPDATE para ID: 2, Nombre: testDoe, Especialidad: Cortes
+Datos recibidos: Array
+(
+    [accion] => actualizar
+    [id] => 3
+    [nombre] => testgio
+    [especialidad] => Acabado
+)
+
+Ejecutando UPDATE para ID: 3, Nombre: testgio, Especialidad: Acabado

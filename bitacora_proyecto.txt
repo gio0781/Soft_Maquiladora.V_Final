@@ -1,0 +1,254 @@
+=== Bitácora de Proyecto: Gestión de Fichas Técnicas ===
+
+Fecha: 2025-05-06 a 2025-05-09
+
+1️⃣ Inicialización del sistema:
+- Se comenzó con la creación de la página test.html para gestionar fichas técnicas de pantalones.
+- Se implementó la función para agregar nuevas fichas con campos: nombre, descripción, botones, cierres, hilos y SKU manual.
+
+2️⃣ Subida y gestión de fotos:
+- Se añadió funcionalidad para tomar una foto usando la cámara del dispositivo o subirla manualmente desde el almacenamiento local.
+- La foto se guardaba inicialmente en la carpeta '/uploads/' con el nombre basado en el SKU y la extensión original del archivo.
+
+3️⃣ Correcciones UX:
+- Se mejoró la usabilidad en móviles: 
+  - La cámara se apaga automáticamente después de tomar la foto.
+  - Se agregó una barra de desplazamiento interna en la ventana modal.
+  - Se añadieron botones independientes para activar la cámara y para subir archivos.
+
+4️⃣ CRUD completo:
+- Se implementaron botones para Editar y Eliminar cada ficha técnica.
+- Backend:
+  - Se creó delete_ficha.php para eliminar fichas y sus fotos asociadas.
+  - Se creó editar_ficha.php para actualizar datos y fotos opcionalmente.
+  - Se creó get_ficha.php (pendiente de integración en algunos puntos).
+
+5️⃣ Estandarización de fotos:
+- Se identificó la necesidad de unificar todas las imágenes en la carpeta '/img/'.
+- Se modificaron los archivos crear_ficha.php y editar_ficha.php para:
+  - Guardar todas las fotos en '/img/'.
+  - Convertir cualquier imagen subida (png, gif, etc.) a formato JPG automáticamente, siempre guardando como 'SKUxxx.jpg'.
+
+6️⃣ SKU autogenerado:
+- Se eliminó el campo SKU del formulario en frontend.
+- En crear_ficha.php, se implementó la generación automática del SKU basado en el último ID existente, siguiendo la nomenclatura 'SKU001', 'SKU002', etc.
+
+7️⃣ Ajustes finales en frontend:
+- Se actualizó test.html para reflejar todos los cambios:
+  - Eliminación del input de SKU.
+  - Corrección de la ruta de imágenes a 'img/${sku}.jpg'.
+  - Corrección de errores visuales y estructurales en la página.
+
+8️⃣ Sugerencia de bitácora:
+- El usuario solicitó la creación de esta bitácora para llevar registro completo de todo lo realizado y facilitar la continuación de tareas futuras.
+
+=== Fin de la bitácora inicial ===
+
+
+=== Arquitectura de Carpetas y Archivos ===
+
+/ .vscode/                # Configuración de Visual Studio Code
+/ api/                    # Carpeta que contiene las APIs PHP
+  └── fichas/
+      ├── crear_ficha.php
+      ├── editar_ficha.php
+      ├── delete_ficha.php
+      └── get_ficha.php
+/ frontend/               # (Carpeta reservada para componentes frontend si se requiere)
+/ img/                    # Carpeta donde se guardan todas las fotos en formato JPG
+/ src/                    # Carpeta para código fuente adicional si aplica
+
+Archivos principales:
+- ayuda.html             # Página de ayuda/documentación del sistema
+- bitacora_proyecto.txt  # Archivo de bitácora del proyecto (este documento)
+- index.html             # Página principal de acceso
+- login.php              # Página de inicio de sesión
+- operador.html          # Vista para el rol de operador
+- styles-ayuda.css       # Estilos específicos para la página de ayuda
+- styles.css             # Estilos generales del sistema
+- test.html              # Página principal de gestión de fichas técnicas
+
+Notas adicionales:
+- La carpeta /img/ contiene todas las imágenes de fichas con nomenclatura SKUxxx.jpg.
+- La carpeta /api/fichas/ contiene toda la lógica backend para gestionar fichas (CRUD completo).
+- test.html es el archivo clave para la interacción frontend actual y la prueba de todas las funciones implementadas.
+
+=== Fin de la bitácora de arquitectura ===
+
+=== Visión General: Función de Corte de Tela ===
+
+Fecha: 2025-05-13
+
+Se plantea implementar una nueva funcionalidad en el sistema para gestionar la producción de cortes de tela. Esta función estará integrada en la sección de logística del sistema y tendrá las siguientes características generales:
+
+- El usuario podrá iniciar un nuevo proceso de corte de tela desde la interfaz.
+- Antes de autorizar un corte, el sistema deberá verificar que el inventario tenga los materiales suficientes según lo definido en una ficha técnica.
+- Se seleccionará la ficha técnica deseada para trabajar, considerando que cada una requiere materiales específicos en determinadas cantidades por pieza.
+- El usuario ingresará cuántas piezas se desean cortar y el tamaño (S, M, L, XL).
+- Se asignará un administrador de línea de producción, seleccionado entre los operadores registrados con jerarquía 1.
+- Se establecerán fechas de inicio y finalización estimada para la orden de corte.
+- El sistema validará automáticamente si es posible realizar el corte con los recursos actuales.
+- Si todo está correcto, se registrará la orden de corte en una nueva tabla `ordenes_corte`.
+
+Esta funcionalidad requiere validaciones cruzadas con el inventario, las fichas técnicas y los usuarios administradores, por lo que se decidió implementar la lógica en el backend (PHP) para garantizar seguridad, escalabilidad y evitar sobrecarga en el frontend.
+
+=== Fin de la visión general de cortes ===
+
+
+=== Proyecto: Seguimiento de Producción de Cortes ===
+
+Fecha de inicio: 2025-05-13
+
+Con base en la visión general de la funcionalidad de corte de tela, se ha diseñado un sistema complementario que permitirá monitorear en tiempo real el avance de cada corte registrado. Este proyecto tendrá dos componentes principales:
+
+1. Registro de cortes:
+   - Ya implementado mediante el formulario en la sección de logística.
+   - Utiliza los datos validados desde el backend (`iniciar_corte.php`) para registrar nuevos cortes en la base de datos.
+   - Incluye selección de ficha técnica, cantidad, talla, administrador y fechas.
+
+2. Visualización de progreso de producción:
+   - Se decidió mantener la tabla de cortes enfocada en datos esenciales (ID, ficha, fechas, estado).
+   - El porcentaje de avance no se mostrará en la tabla, sino de forma visual mediante una gráfica dinámica.
+   - En el frontend, se agregará un selector o botón que permitirá elegir un corte activo.
+   - Una vez seleccionado, el sistema cargará en la gráfica (anteriormente utilizada para pedidos) el porcentaje de avance del corte:
+     - Se calculará con base en la cantidad total de piezas vs. piezas completadas.
+     - La información se obtendrá desde `get_cortes.php`, ajustado para incluir cantidad total y piezas completadas por corte.
+   - La gráfica será de tipo doughnut y cambiará dinámicamente al cambiar la selección del corte.
+
+Consideraciones adicionales:
+- Se requerirá agregar un campo `completadas` a la tabla `Produccion_Piezas` o una tabla de control equivalente para hacer seguimiento del progreso.
+- Se podrían agregar funciones para actualizar el estado del corte manual o automáticamente al alcanzar el 100%.
+- Este diseño busca mantener una interfaz clara, sin sobrecargar la tabla principal, y aprovechar el espacio gráfico ya presente en la aplicación.
+
+=== Fin del proyecto: Seguimiento de Producción de Cortes ===
+
+=== Refactorización de gestión de materiales de ficha técnica ===
+
+Fecha: 2025-05-13
+
+Se detectó que la tabla `FichaTec` contenía los campos `boton`, `cierre`, `hilo` directamente, lo cual limitaba la flexibilidad del sistema y no permitía escalar hacia nuevos tipos de materiales ni se relacionaba adecuadamente con el inventario.
+
+Para solucionarlo:
+
+- Se decidió centralizar todos los materiales requeridos en la tabla `ficha_materiales`, que ya contenía el modelo relacional correcto (`ficha_id`, `material_id`, `cantidad_requerida`).
+- Se preparó una migración para transferir los valores actuales de `FichaTec` (boton, cierre, hilo) hacia `ficha_materiales`.
+- Se propuso establecer una llave foránea entre `ficha_materiales.ficha_id` y `FichaTec.idfic` para asegurar integridad referencial.
+- Se dejó previsto eliminar los campos `boton`, `cierre` e `hilo` de `FichaTec` una vez confirmada la migración completa y su correcto funcionamiento.
+
+Esta refactorización permitirá automatizar validaciones de inventario durante el corte y facilitar el mantenimiento futuro del sistema.
+
+=== Fin del registro de refactorización de ficha_materiales ===
+
+
+=== Revisión y corrección de integridad al migrar materiales ===
+
+Fecha: 2025-05-13
+
+Durante la migración de datos desde la tabla `FichaTec` hacia `ficha_materiales`, se detectó un error de clave foránea (#1452) causado por valores de `material_id` que no existen en la tabla `Inventario`. Este problema impedía completar el traslado de los materiales definidos en los campos `boton`, `cierre` e `hilo`.
+
+Se tomaron las siguientes acciones:
+
+1. Se diagnosticó el error como una violación de integridad referencial provocada por IDs inválidos en `FichaTec`.
+2. Se generaron consultas SQL para identificar valores de `boton`, `cierre`, `hilo` que no existen en `Inventario`.
+3. Se implementó una versión segura del script de migración con validación `IN (SELECT id FROM Inventario)` para evitar fallos y asegurar que solo se copien registros válidos.
+4. Se documentó la necesidad de estandarizar y limpiar previamente los valores en `FichaTec` antes de futuras migraciones automáticas.
+5. Se planteó la posibilidad de crear una vista de operadores para asociar automáticamente administradores de corte (jerarquía 1) y facilitar su selección en el frontend.
+
+Esta validación y ajuste aseguran la consistencia entre fichas técnicas y los materiales del inventario, lo cual es esencial para el correcto funcionamiento del módulo de cortes.
+
+=== Fin de la sección de integridad de migración ===
+
+
+=== Análisis Técnico: Problemas detectados en test.html ===
+
+Fecha: 2025-05-13
+
+Se realizó una revisión completa del archivo `test.html`, el cual centraliza la gestión visual y lógica de la aplicación. Durante el análisis se identificaron los siguientes problemas clave:
+
+1. Código embebido excesivo:
+   - Todo el HTML, CSS y JavaScript están contenidos en un único archivo, lo que dificulta el mantenimiento y depuración del proyecto.
+
+2. Estilos en línea redundantes:
+   - Se detectaron múltiples elementos con estilos neumórficos duplicados directamente en atributos `style`. Esto rompe la reutilización y dificulta cambios globales de estilo.
+
+3. Redundancia en funciones de carga:
+   - Funciones `fetch()` similares se repiten para productos, fichas, pedidos, etc., sin una estructura reutilizable común.
+
+4. Lógica centralizada en `mostrarSeccion()`:
+   - La función `mostrarSeccion(nombre)` contiene lógica para múltiples vistas y tareas, generando complejidad y alta cohesión.
+
+5. Renderizado tardío de gráficos:
+   - Se utiliza `setTimeout` para asegurar que los gráficos se dibujen después del DOM, en lugar de utilizar eventos más robustos como `DOMContentLoaded` o control explícito de flujo tras `fetch()`.
+
+6. Duplicación de contenido:
+   - El HTML para pedidos aparece repetido en múltiples ubicaciones (estructura de sección y formularios), generando confusión.
+
+7. Validación de acceso débil:
+   - El sistema confía únicamente en `localStorage` para definir la jerarquía y no realiza verificación de sesión desde el backend.
+
+8. Limpieza incompleta del DOM:
+   - Algunos modales o elementos (como cámara o gráficos) no se limpian correctamente al cerrar secciones, pudiendo generar sobrecarga visual o lógica.
+
+Conclusión:
+Se recomienda modularizar urgentemente el archivo `test.html`, separando `main.js`, `secciones.js` y otros scripts, además de trasladar todos los estilos neumórficos a `styles.css` para mejorar mantenibilidad y rendimiento.
+
+=== Fin del análisis técnico de test.html ===
+
+
+Errores detectados el 2025-05-15:
+
+9. Error de funciones no reconocidas:
+   - Al intentar usar botones de inventario con `onclick`, el navegador arrojaba errores del tipo `ReferenceError: Can't find variable: mostrarFormularioInventario`.
+   - Esto ocurrió porque las funciones estaban definidas en `inventario.js`, pero no estaban disponibles en el ámbito global (`window`).
+
+10. Problemas con orden de carga de scripts:
+    - Aunque se usa `defer`, algunas funciones aún no estaban disponibles al momento de asignar eventos desde el HTML.
+    - Se identificó la necesidad de asignar eventos dinámicamente mediante `addEventListener` después de renderizar cada sección.
+
+11. Uso excesivo de `onclick` en HTML:
+    - Se detectó que varios botones de inventario usaban directamente `onclick="..."`, lo cual resultó poco confiable y generó errores si las funciones no estaban definidas globalmente.
+    - Se decidió reemplazar esos botones por elementos con ID y registrar los eventos en tiempo de ejecución.
+
+
+=== Expansión del Proyecto: Integración de Algoritmos tipo TORA ===
+
+Fecha de inicio: 2025-05-24
+
+Se discutió la posibilidad de implementar un módulo de optimización basado en el software TORA (Operations Research) de Hamdy A. Taha, específicamente modelos como:
+- Camino crítico (PERT/CPM)
+- Asignación óptima de tareas
+- Modelo de transporte y flujo de materiales
+- Optimización de inventario
+
+Esta integración busca mejorar la eficiencia del taller, proponiendo rutas óptimas de producción, minimización de tiempos y asignación inteligente de recursos (operadores, materiales, etapas).
+
+Durante esta discusión se detectaron los siguientes puntos clave:
+
+1. Estado actual del sistema:
+   - El sistema ya cuenta con fichas técnicas, tareas, operadores e inventario, lo cual proporciona una buena base para implementar modelos de operaciones.
+   - El frontend tiene buena estructura modular en expansión, con integración de CRUD, formularios dinámicos, y gráficos.
+
+2. Problemas detectados que deben resolverse antes:
+   - Las fichas técnicas no se actualizan visualmente tras creación o edición, a menos que se recargue la página.
+   - Las imágenes se cachean y no reflejan inmediatamente los cambios o nuevas subidas.
+   - En ocasiones, imágenes de fichas anteriores (incluso de otros dispositivos) se asignan incorrectamente debido a errores en el manejo de archivos en el backend o por uso de nombres duplicados.
+   - Algunas funciones críticas (`mostrarSeccion`, `cargarFichasTecnicas`) estaban anidadas erróneamente, causando errores de carga JS.
+   - Se detectaron referencias a scripts inexistentes (`reabastecimiento.js`, `pedidos.js`) causando fallos visuales globales.
+
+3. Mejoras aplicadas:
+   - Se corrigió `mostrarSeccion()` y se separó correctamente la función `cargarDatosSeccion()`.
+   - Se implementó fallback de scripts con notificación al usuario cuando hay errores de carga.
+   - Se agregó parámetro anti-cache (`?timestamp`) a las rutas de imágenes para forzar recarga de fotos actualizadas.
+   - Se verificó y mejoró `crear_ficha.php` para garantizar que el archivo de imagen nuevo se sube correctamente y se sobreescribe si existe.
+   - Se configuró correctamente una nueva rama `v6` en GitHub para evitar sobrescritura de `main`.
+
+4. Propuesta técnica para implementar módulo tipo TORA:
+   - Fase 1: corregir completamente la gestión de imágenes y actualización visual de fichas.
+   - Fase 2: crear estructura `ficha_etapas` si no existe, para representar etapas de producción como nodos conectados.
+   - Fase 3: implementar visualización como grafo (HTML + JS Canvas o librería ligera).
+   - Fase 4: aplicar algoritmo de camino crítico (CPM) en JS para calcular el tiempo total y detectar cuellos de botella.
+   - Fase 5: mostrar ruta óptima en interfaz como una simulación educativa-productiva.
+
+Esta expansión proyecta transformar el sistema en una herramienta inteligente de planificación y ejecución para la maquiladora, alineada con modelos clásicos de investigación de operaciones aplicados a producción textil.
+
+=== Fin del registro de expansión TORA ===

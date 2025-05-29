@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: #dce1ea;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: #dce1ea;
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 8px 8px 16px #b8bcc4, -8px -8px 16px #ffffff;
+      width: 320px;
+      text-align: center;
+    }
+    .login-container img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      box-shadow: 4px 4px 8px #b8bcc4, -4px -4px 8px #ffffff;
+    }
+    .login-container h2 {
+      margin-bottom: 10px;
+      font-size: 1.8rem;
+      color: #2b2e4a;
+    }
+    .login-container p {
+      margin-top: 10px;
+      margin-bottom: 20px;
+      color: #555;
+    }
+    .input-field {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: #dce1ea;
+      box-shadow: inset 5px 5px 10px #b8bcc4, inset -5px -5px 10px #ffffff;
+      outline: none;
+      color: #2b2e4a;
+    }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 6px 6px 12px #b8bcc4, -6px -6px 12px #ffffff;
+      transition: all 0.3s ease;
+    }
+    .btn-primary {
+      background-color: #178b9f;
+      color: white;
+    }
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body id="indexPage">
+  <div class="login-container">
+    <img id="logoEmpresa" src="img/Logo_Maquiladora.jpg" alt="Logo Maquiladora">
+    <h2>Bienvenido</h2>
+    <p>Por favor ingresa tu usuario</p>
+    <form id="loginForm" onsubmit="return false;">
+      <input type="text" id="username" class="input-field" placeholder="Usuario">
+      <input type="password" id="password" class="input-field" placeholder="Contraseña">
+      <button type="submit" class="btn btn-primary">Continuar</button>
+    </form>
+    <button class="btn btn-secondary" onclick="window.location.href='ayuda.html'">Pedir ayuda técnica</button>
+    <button class="btn btn-secondary" onclick="window.location.href='test.html'">Test Login</button>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      fetch("api/empresa/logo.php")
+        .then(res => res.json())
+        .then(data => {
+          if (data.logo) {
+            document.getElementById("logoEmpresa").src = data.logo;
+          }
+        })
+        .catch(err => console.error("Error al cargar el logo:", err));
+
+      const loginForm = document.getElementById("loginForm");
+      loginForm.addEventListener("submit", async () => {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        if (username && password) {
+          try {
+            const response = await fetch("api/usuarios/login.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem("jerarquiaUsuario", data.jerarquia);
+              localStorage.setItem("nombreUsuario", data.nombre);
+
+              const jerarquia = String(data.jerarquia).toLowerCase();
+              if (jerarquia === 'admin' || jerarquia === '1') {
+                window.location.href = "test.html";
+              } else if (jerarquia === 'operador' || jerarquia === '2') {
+                window.location.href = "operador.html";
+              } else {
+                alert("Rol no reconocido: " + jerarquia);
+              }
+            } else {
+              alert(data.message || "Credenciales incorrectas");
+            }
+          } catch (err) {
+            console.error("Error al intentar autenticar:", err);
+            alert("Error de conexión con el servidor.");
+          }
+        } else {
+          alert("Por favor completa todos los campos.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+
+
+

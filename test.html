@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sistema de Gestión - Taller</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<script defer="" src="src/inventario.js"></script>
+<script defer="" src="src/cargarProductos.js"></script>
+<script defer="" src="src/pedido.js"></script>
+<script defer="" src="src/operadores.js"></script>
+<script src="js/reabastecimiento.js"></script>
+<style>
+        body { background: #e0e5ec; color: #333; font-family: 'Segoe UI', sans-serif; }
+        .neumorphic {
+            background: #e0e5ec;
+            border-radius: 16px;
+            box-shadow: 10px 10px 20px #a3b1c6, -10px -10px 20px #ffffff;
+        }
+        .neumorphic-inner {
+            background: #e0e5ec;
+            border-radius: 16px;
+            box-shadow: inset 8px 8px 16px #a3b1c6, inset -8px -8px 16px #ffffff;
+        }
+        input:focus, select:focus, textarea:focus {
+            box-shadow: inset 2px 2px 5px #babecc, inset -5px -5px 10px #ffffff;
+        }
+        table { border-collapse: collapse; width: 100%; background-color: #fff; border-radius: 12px; overflow: hidden; }
+        th, td { border-bottom: 1px solid #ccc; padding: 12px; text-align: left; }
+        th { background-color: #f0f0f0; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-white text-gray-800">
+<!-- Contenido principal -->
+<div class="pb-24 px-4 pt-6" id="content"></div>
+<!-- Menú inferior -->
+<nav class="fixed bottom-0 w-full bg-white flex justify-around items-center py-3 border-t shadow-md neumorphic">
+<!-- Perfil de usuario -->
+<div class="relative group flex flex-col items-center text-gray-500 hover:text-teal-600" id="btn-usuario">
+<button class="focus:outline-none mt-1 neumorphic p-2">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5.121 17.804A9.004 9.004 0 0112 15c2.003 0 3.864.66 5.304 1.768M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-white border rounded shadow-md w-32 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 neumorphic">
+<div class="px-4 py-2 border-b text-sm text-gray-600" id="perfil-info" style="display: none;">
+<div><strong>Usuario:</strong> <span id="info-usuario">-</span></div>
+<div><strong>Rol:</strong> <span id="info-jerarquia">-</span></div>
+</div>
+<button class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" id="btn-ver-perfil">Ver Perfil</button>
+<button class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100" onclick="cerrarSesion()">Cerrar Sesión</button>
+</div>
+</div>
+<!-- Navegación principal -->
+<button class="flex flex-col items-center text-gray-500 hover:text-teal-600 neumorphic p-2" id="btn-resumen" onclick="mostrarSeccion('resumen')">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="flex flex-col items-center text-gray-500 hover:text-teal-600 neumorphic p-2" id="btn-asignacion" onclick="mostrarSeccion('asignacion')">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="flex flex-col items-center text-gray-500 hover:text-teal-600 neumorphic p-2" id="btn-logistica" onclick="mostrarSeccion('logistica')">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="flex flex-col items-center text-gray-500 hover:text-teal-600 neumorphic p-2" id="btn-fichas" onclick="mostrarSeccion('fichas')">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 5h6M9 9h6m-6 4h6m-6 4h6M5 5h.01M5 9h.01M5 13h.01M5 17h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="flex flex-col items-center text-gray-500 hover:text-teal-600 neumorphic p-2" id="btn-pedidos" onclick="mostrarSeccion('pedidos')">
+<svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</nav>
+<!-- Modal de Inventario -->
+<div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="formInventarioModal">
+<div class="bg-white p-6 rounded shadow w-full max-w-lg neumorphic" id="formInventarioContainer">
+<h3 class="text-lg font-semibold mb-4" id="tituloFormInventario">Formulario de Inventario</h3>
+<input id="modoInventario" type="hidden" value=""/>
+<input id="idMaterial" type="hidden" value=""/>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<input class="border p-2 rounded text-sm neumorphic-inner" id="nombreMaterial" placeholder="Nombre del Material" type="text"/>
+<input class="border p-2 rounded text-sm neumorphic-inner" id="cantidadDisponible" placeholder="Cantidad Disponible" type="number"/>
+<input class="border p-2 rounded text-sm neumorphic-inner" id="cantidadMinima" placeholder="Cantidad Mínima" type="number"/>
+<select class="border p-2 rounded text-sm neumorphic-inner" id="estadoMaterial">
+<option value="">Seleccionar Estado</option>
+<option value="Disponible">Disponible</option>
+<option value="Crítico">Crítico</option>
+<option value="Agotado">Agotado</option>
+</select>
+</div>
+<div class="flex justify-end mt-4 gap-2">
+<button class="bg-gray-500 text-white px-4 py-2 rounded text-sm" id="btnCancelarInventario">Cancelar</button>
+<button class="bg-teal-600 text-white px-4 py-2 rounded text-sm" id="btnGuardarInventario">Guardar</button>
+</div>
+</div>
+</div>
+<!-- Modal de Ficha Técnica - Crear -->
+<div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="formFichaModal">
+<div class="bg-white p-6 rounded shadow w-full max-w-lg neumorphic">
+<h3 class="text-lg font-semibold mb-4">Nueva Ficha Técnica</h3>
+<form class="space-y-4" enctype="multipart/form-data" id="formFicha">
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="nombreFicha" name="nombre" placeholder="Nombre del Producto" required="" type="text"/>
+<textarea class="w-full border p-2 rounded text-sm neumorphic-inner" id="descripcionFicha" name="descripcion" placeholder="Descripción" required=""></textarea>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="botonFicha" name="boton" placeholder="Botones utilizados" required="" type="text"/>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="cierreFicha" name="cierre" placeholder="Tipo de cierre" required="" type="text"/>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="hiloFicha" name="hilo" placeholder="Tipo de hilo" required="" type="text"/>
+<!-- Entrada de imagen: permite cámara o galería -->
+<input accept="image/*" capture="environment" class="w-full border p-2 rounded text-sm neumorphic-inner" id="fotoFicha" name="foto" required="" type="file"/>
+<div class="flex justify-end gap-2 pt-2">
+<button class="bg-gray-500 text-white px-4 py-2 rounded text-sm" id="btnCancelarFicha" type="button">Cancelar</button>
+<button class="bg-teal-600 text-white px-4 py-2 rounded text-sm" type="submit">Guardar</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Modal para Editar Ficha Técnica -->
+<div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="formEditarFichaModal">
+<div class="bg-white p-6 rounded shadow w-full max-w-lg neumorphic">
+<h3 class="text-lg font-semibold mb-4">Editar Ficha Técnica</h3>
+<form class="space-y-4" enctype="multipart/form-data" id="formEditarFicha">
+<input id="idFichaEditar" name="id" type="hidden"/>
+<input id="skuFichaEditar" name="sku" type="hidden"/>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="nombreFichaEditar" name="nombre" placeholder="Nombre del Producto" required="" type="text"/>
+<textarea class="w-full border p-2 rounded text-sm neumorphic-inner" id="descripcionFichaEditar" name="descripcion" placeholder="Descripción" required=""></textarea>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="botonFichaEditar" name="boton" placeholder="Botones utilizados" required="" type="text"/>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="cierreFichaEditar" name="cierre" placeholder="Tipo de cierre" required="" type="text"/>
+<input class="w-full border p-2 rounded text-sm neumorphic-inner" id="hiloFichaEditar" name="hilo" placeholder="Tipo de hilo" required="" type="text"/>
+<input accept="image/*" class="w-full border p-2 rounded text-sm neumorphic-inner" id="fotoFichaEditar" name="foto" type="file"/>
+<div class="flex justify-end gap-2 pt-2">
+<button class="bg-gray-500 text-white px-4 py-2 rounded text-sm" id="btnCancelarEditarFicha" type="button">Cancelar</button>
+<button class="bg-teal-600 text-white px-4 py-2 rounded text-sm" type="submit">Guardar Cambios</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Notificación -->
+<div class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded shadow-lg text-sm hidden z-50" id="notificacion">
+    Operación exitosa
+</div>
+<script>
+// === CONFIGURACIÓN GLOBAL ===
+const jerarquia = localStorage.getItem("jerarquiaUsuario");
+const nombreUsuario = localStorage.getItem("nombreUsuario");
+
+// Validar sesión
+if (!jerarquia) {
+    window.location.href = "index.html";
+}
+
+// Configurar info de usuario
+document.getElementById("info-usuario").textContent = nombreUsuario || "Usuario";
+document.getElementById("info-jerarquia").textContent = jerarquia === "1" ? "Administrador" : "Operador";
+
+// === SECCIONES DEL SISTEMA ===
+const secciones = {
+    resumen: `
+        <div class="max-w-6xl mx-auto space-y-8">
+            <h2 class="text-3xl font-bold text-center mb-8">📊 Dashboard - Resumen General</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="neumorphic p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-center">Estado de Pedidos</h3>
+                    <canvas id="graficaPedidos" style="max-width: 400px; max-height: 400px; margin: 0 auto;"></canvas>
+                </div>
+                
+                <div class="neumorphic p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-center">Inventario Disponible</h3>
+                    <canvas id="graficaDisponibilidad"></canvas>
+                </div>
+            </div>
+            
+            <div class="neumorphic p-6">
+                <h3 class="text-xl font-semibold mb-4">🔄 Seguimiento de Producción</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>ID Orden</th>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Estado</th>
+                                <th>Operadores</th>
+                                <th>Reporte</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-seguimiento-produccion">
+                            <tr><td colspan="5" class="text-center py-4">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `,
+
+    asignacion: `
+        <div class="max-w-6xl mx-auto space-y-8">
+            <h2 class="text-3xl font-bold text-center mb-8">👥 Gestión de Operadores</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Panel de operadores disponibles -->
+                <div class="neumorphic p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-center">Estado Actual</h3>
+                    <div id="contenedor-disponibles" class="space-y-3">
+                        <div class="text-center text-gray-500 py-4">Cargando operadores...</div>
+                    </div>
+                </div>
+                
+                <!-- Panel de gestión completa -->
+                <div class="lg:col-span-2 neumorphic p-6">
+                    <div id="contenedor-operadores">
+                        <div class="text-center text-gray-500 py-8">Cargando gestión de operadores...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel de estadísticas rápidas -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="neumorphic p-4 text-center">
+                    <div class="text-2xl font-bold text-green-600" id="stat-disponibles">-</div>
+                    <div class="text-sm text-gray-600">Disponibles</div>
+                </div>
+                <div class="neumorphic p-4 text-center">
+                    <div class="text-2xl font-bold text-blue-600" id="stat-ocupados">-</div>
+                    <div class="text-sm text-gray-600">En Trabajo</div>
+                </div>
+                <div class="neumorphic p-4 text-center">
+                    <div class="text-2xl font-bold text-yellow-600" id="stat-especialidades">-</div>
+                    <div class="text-sm text-gray-600">Especialidades</div>
+                </div>
+                <div class="neumorphic p-4 text-center">
+                    <div class="text-2xl font-bold text-purple-600" id="stat-total">-</div>
+                    <div class="text-sm text-gray-600">Total</div>
+                </div>
+            </div>
+        </div>
+    `,
+
+   logistica: `
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-8">📦 Gestión de Inventario</h2>
+            
+            <!-- Panel de alertas críticas (se muestra automáticamente si hay materiales críticos) -->
+            
+            <div class="neumorphic p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Inventario de Materiales</h3>
+                    <div class="flex gap-2">
+                        <button onclick="mostrarPanelCriticos()" 
+                                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                            🚨 Materiales Críticos
+                        </button>
+                        <button onclick="mostrarFormularioInventario('agregar')" 
+                                class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
+                            + Agregar Material
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded mb-4">
+                    <h4 class="font-semibold text-blue-800 mb-2">💡 Sistema de Alertas Automáticas</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🚨</span>
+                            <div>
+                                <div class="font-medium text-red-700">AGOTADO</div>
+                                <div class="text-gray-600">Cantidad = 0</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">⚠️</span>
+                            <div>
+                                <div class="font-medium text-orange-700">CRÍTICO</div>
+                                <div class="text-gray-600">≤ Cantidad Mínima</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🟨</span>
+                            <div>
+                                <div class="font-medium text-yellow-700">BAJO</div>
+                                <div class="text-gray-600">≤ 1.5x Mínima</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">✅</span>
+                            <div>
+                                <div class="font-medium text-green-700">NORMAL</div>
+                                <div class="text-gray-600">> 1.5x Mínima</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table id="tablaInventario" class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="p-3 text-left">ID</th>
+                                <th class="p-3 text-left">Material</th>
+                                <th class="p-3 text-center">Cantidad Disponible</th>
+                                <th class="p-3 text-center">Cantidad Mínima</th>
+                                <th class="p-3 text-center">Estado</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaInventarioBody">
+                            <tr><td colspan="6" class="text-center py-4">Cargando inventario...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        💡 <strong>Tip:</strong> Los materiales con alertas rojas/naranjas requieren reabastecimiento inmediato
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="generarReportePDF()" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            📄 Reporte Completo
+                        </button>
+                        <button onclick="generarReporteCriticos()" 
+                                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                            📄 Reporte Críticos
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+         
+    `,
+
+    fichas: `
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold">📋 Fichas Técnicas</h2>
+                <button onclick="mostrarFormularioFicha()" 
+                        class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
+                    + Nueva Ficha
+                </button>
+            </div>
+            <div id="fichas-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+        </div>
+    `,
+
+  // REEMPLAZAR COMPLETAMENTE la sección 'pedidos' en const secciones (línea aprox 800 en test.html)
+
+pedidos: `
+    <div class="max-w-6xl mx-auto space-y-8">
+        <h2 class="text-3xl font-bold text-center mb-8">🛍️ Gestión de Pedidos</h2>
+        
+        <div class="neumorphic p-6">
+            <h3 class="text-xl font-semibold mb-4">Registrar Nuevo Pedido</h3>
+            <form id="formPedido" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="cliente" placeholder="Nombre del Cliente" 
+                       class="p-3 rounded neumorphic-inner" required>
+                <input type="number" id="cantidad" placeholder="Cantidad" min="1"
+                       class="p-3 rounded neumorphic-inner" required>
+                <input type="date" id="fechaRegistro" 
+                       class="p-3 rounded neumorphic-inner" required>
+                <input type="date" id="fechaEntrega" 
+                       class="p-3 rounded neumorphic-inner" required>
+                <select id="selectFichaPedido" name="producto" 
+                        class="p-3 rounded neumorphic-inner md:col-span-2" required>
+                    <option value="">Cargando productos...</option>
+                </select>
+                <div class="md:col-span-2 flex justify-center">
+                    <button type="submit" 
+                            class="px-8 py-3 bg-blue-500 text-white rounded shadow-md hover:bg-blue-600 transition-colors">
+                        📝 Registrar Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="neumorphic p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">📋 Pedidos Registrados</h3>
+                <button onclick="cargarPedidos()" 
+                        class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors">
+                    🔄 Actualizar
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table id="tablaPedidos" class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="p-3 text-left font-semibold">ID Pedido</th>
+                            <th class="p-3 text-left font-semibold">Cliente</th>
+                            <th class="p-3 text-left font-semibold">Producto</th>
+                            <th class="p-3 text-center font-semibold">Cantidad</th>
+                            <th class="p-3 text-left font-semibold">F. Registro</th>
+                            <th class="p-3 text-left font-semibold">F. Entrega</th>
+                            <th class="p-3 text-center font-semibold">Estado</th>
+                            <th class="p-3 text-center font-semibold">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="8" class="text-center py-4 text-gray-500">Cargando pedidos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+`
+};
+
+// === FUNCIONES PRINCIPALES ===
+
+// Variables globales para gráficas
+let graficaPedidosInstance = null;
+let graficaDisponibilidadInstance = null;
+
+function mostrarSeccion(nombre) {
+    const content = document.getElementById("content");
+    content.innerHTML = secciones[nombre];
+
+    // Actualizar botones activos
+    const botones = ['resumen', 'logistica', 'fichas', 'pedidos', 'asignacion'];
+    botones.forEach(btn => {
+        const elemento = document.getElementById(`btn-${btn}`);
+        if (elemento) {
+            elemento.classList.remove("text-teal-600");
+            elemento.classList.add("text-gray-500");
+        }
+    });
+    
+    const botonActivo = document.getElementById(`btn-${nombre}`);
+    if (botonActivo) {
+        botonActivo.classList.remove("text-gray-500");
+        botonActivo.classList.add("text-teal-600");
+    }
+
+    // Llamar función externa de carga
+    cargarDatosSeccion(nombre);
+}
+
+function cargarDatosSeccion(nombre) {
+    switch (nombre) {
+        case 'resumen':
+            cargarDashboard();
+            break;
+        case 'logistica':
+            cargarInventario();
+            break;
+        case 'fichas':
+            cargarFichasTecnicas();
+            break;
+        case 'pedidos':
+            // Cargar productos primero
+            cargarProductos().then(() => {
+                // Luego cargar pedidos y configurar formulario
+                cargarPedidos();
+                configurarFormularioPedidos();
+            }).catch(err => {
+                console.error("Error cargando productos:", err);
+                // Intentar cargar pedidos de todas formas
+                cargarPedidos();
+                configurarFormularioPedidos();
+            });
+            break;
+        case 'asignacion':
+            cargarOperadoresYEstadisticas();
+            break;
+    }
+}
+
+// === FUNCIONES ESPECÍFICAS ===
+
+function cargarDashboard() {
+    fetch("api/pedidos/estado_pedidos.php")
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || "Error al obtener datos de pedidos");
+            }
+
+            const estados = data.data.map(e => e.estado);
+            const totales = data.data.map(e => parseInt(e.total));
+
+            const canvasPedidos = document.getElementById("graficaPedidos");
+            if (!canvasPedidos) return;
+
+            const ctx = canvasPedidos.getContext("2d");
+            if (graficaPedidosInstance) {
+                graficaPedidosInstance.destroy();
+            }
+
+            graficaPedidosInstance = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: estados,
+                    datasets: [{
+                        data: totales,
+                        backgroundColor: ["#0d9488", "#b45309", "#a855f7"]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "bottom" },
+                        title: { display: true, text: "Estado de Pedidos" }
+                    }
+                }
+            });
+        })
+        .catch(err => {
+            console.error("Error en gráfico de pedidos:", err);
+        });
+
+    // Cargar gráfica de inventario
+    cargarGraficaInventario();
+
+    // Cargar seguimiento de producción
+    cargarSeguimientoProduccion();
+}
+
+function cargarGraficaInventario() {
+    fetch("api/inventario/get_inventario.php")
+        .then(res => res.json())
+        .then(data => {
+            let inventarioArray = data.success ? data.data : [];
+            const nombres = inventarioArray.map(item => item.Material);
+            const cantidades = inventarioArray.map(item => parseInt(item.cantidad_disp));
+
+            setTimeout(() => {
+                const canvas = document.getElementById("graficaDisponibilidad");
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    if (graficaDisponibilidadInstance) {
+                        graficaDisponibilidadInstance.destroy();
+                    }
+                    graficaDisponibilidadInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: nombres,
+                            datasets: [{
+                                label: 'Cantidad disponible',
+                                data: cantidades,
+                                backgroundColor: '#0d9488'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: { y: { beginAtZero: true } }
+                        }
+                    });
+                }
+            }, 100);
+        })
+        .catch(err => console.error("Error cargando gráfica de inventario:", err));
+}
+
+function cargarSeguimientoProduccion() {
+    fetch("api/produccion/get_seguimiento.php")
+        .then(res => res.json())
+        .then(data => {
+            const tabla = document.getElementById("tabla-seguimiento-produccion");
+            if (!tabla) return;
+
+            tabla.innerHTML = "";
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(item => {
+                    const fila = document.createElement("tr");
+                    const estadoClass = item.estado === "Completado" 
+                        ? 'bg-green-200 text-green-800' 
+                        : 'bg-yellow-200 text-yellow-800';
+                    
+                        fila.innerHTML = `
+    <td class="p-3">${item.id_orden}</td>
+    <td class="p-3">${item.producto}</td>
+    <td class="p-3">${item.cantidad}</td>
+    <td class="p-3">
+        <span class="px-2 py-1 rounded text-xs ${estadoClass}">
+            ${item.estado}
+        </span>
+    </td>
+    <td class="p-3">${item.operadoras.join(', ') || 'N/D'}</td>
+    <td class="p-3">
+        <button onclick="descargarReportePedido('${item.id_orden}', '${item.producto}', ${item.cantidad}, '${item.estado}', \`${item.operadoras.join(', ') || 'N/D'}\`)" 
+                class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
+            📄 PDF
+        </button>
+    </td>
+`;
+                    tabla.appendChild(fila);
+                });
+            } else {
+                tabla.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No hay órdenes de producción</td></tr>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error cargando seguimiento:", err);
+            const tabla = document.getElementById("tabla-seguimiento-produccion");
+            if (tabla) {
+                tabla.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error cargando datos</td></tr>`;
+            }
+        });
+}
+
+// === FUNCIONES DE FICHAS TÉCNICAS - CORREGIDAS ===
+
+function cargarFichasTecnicas() {
+    console.log("🔄 Cargando fichas técnicas...");
+    
+    fetch("api/fichas/get_fichas.php")
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById("fichas-container");
+            if (!container) {
+                console.error("❌ Contenedor de fichas no encontrado");
+                return;
+            }
+
+            container.innerHTML = "";
+            
+            if (Array.isArray(data) && data.length > 0) {
+                console.log(`✅ Cargando ${data.length} fichas técnicas`);
+                
+                data.forEach(ficha => {
+                    const card = document.createElement("div");
+                    card.className = "neumorphic p-4";
+                    
+                    // Usar timestamp para evitar caché de imágenes
+                    const timestamp = Date.now();
+                    
+                    card.innerHTML = `
+                        <img src="img/${ficha.sku || 'placeholder'}.jpg?t=${timestamp}" 
+                             alt="${ficha.nombre}" 
+                             class="w-full h-48 object-cover rounded mb-3"
+                             onerror="this.src='img/placeholder.jpg'">
+                        <h3 class="text-lg font-semibold mb-2">${ficha.nombre}</h3>
+                        <p class="text-sm text-gray-600 mb-2">${ficha.descripcion}</p>
+                        <div class="text-xs text-gray-500 space-y-1 mb-3">
+                            <p><strong>Botones:</strong> ${ficha.boton}</p>
+                            <p><strong>Cierres:</strong> ${ficha.cierre}</p>
+                            <p><strong>Hilos:</strong> ${ficha.hilo}</p>
+                            <p><strong>SKU:</strong> ${ficha.sku}</p>
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button onclick="editarFicha(${ficha.idfic})" 
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                                ✏️ Editar
+                            </button>
+                            <button onclick="eliminarFicha(${ficha.idfic})" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                container.innerHTML = `<p class="text-center text-gray-500 col-span-full">No hay fichas técnicas registradas</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("❌ Error cargando fichas:", err);
+            const container = document.getElementById("fichas-container");
+            if (container) {
+                container.innerHTML = `<p class="text-center text-red-500 col-span-full">Error cargando fichas técnicas</p>`;
+            }
+        });
+}
+
+// Función para mostrar modal de nueva ficha
+function mostrarFormularioFicha() {
+    console.log("📋 Mostrando formulario de nueva ficha");
+    const modal = document.getElementById("formFichaModal");
+    if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        
+        // Limpiar formulario
+        const form = document.getElementById("formFicha");
+        if (form) {
+            form.reset();
+        }
+    } else {
+        console.error("❌ Modal de ficha no encontrado");
+    }
+}
+
+// Función para editar ficha
+function editarFicha(id) {
+    console.log("✏️ Editando ficha con ID:", id);
+    
+    fetch(`api/fichas/get_fichas.php`)
+        .then(res => res.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                const ficha = data.find(f => f.idfic == id);
+                if (ficha) {
+                    // Llenar formulario de edición
+                    document.getElementById("idFichaEditar").value = ficha.idfic;
+                    document.getElementById("nombreFichaEditar").value = ficha.nombre;
+                    document.getElementById("descripcionFichaEditar").value = ficha.descripcion;
+                    document.getElementById("botonFichaEditar").value = ficha.boton;
+                    document.getElementById("cierreFichaEditar").value = ficha.cierre;
+                    document.getElementById("hiloFichaEditar").value = ficha.hilo;
+                    document.getElementById("skuFichaEditar").value = ficha.sku;
+                    
+                    // Mostrar modal
+                    const modal = document.getElementById("formEditarFichaModal");
+                    if (modal) {
+                        modal.classList.remove("hidden");
+                        modal.classList.add("flex");
+                    }
+                } else {
+                    console.error("❌ Ficha no encontrada");
+                    alert("No se pudo encontrar la ficha para editar");
+                }
+            }
+        })
+        .catch(err => {
+            console.error("❌ Error al cargar ficha para editar:", err);
+            alert("Error de conexión al cargar la ficha");
+        });
+}
+
+// Función para eliminar ficha
+function eliminarFicha(id) {
+    console.log("🗑️ Eliminando ficha con ID:", id);
+    
+    if (confirm("¿Está seguro de eliminar esta ficha técnica? Esta acción no se puede deshacer.")) {
+        fetch("api/fichas/delete_ficha.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: id })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log("📦 Respuesta eliminar:", data);
+            if (data.success) {
+                mostrarNotificacion("Ficha eliminada correctamente", "success");
+                cargarFichasTecnicas(); // Recargar lista
+            } else {
+                console.error("❌ Error del servidor:", data.error);
+                alert("Error: " + (data.error || "No se pudo eliminar la ficha"));
+            }
+        })
+        .catch(err => {
+            console.error("❌ Error de conexión:", err);
+            alert("Error de conexión con el servidor");
+        });
+    }
+}
+
+// REEMPLAZAR COMPLETAMENTE la función cargarPedidos en test.html (línea aprox 1200)
+
+function cargarPedidos() {
+    console.log("🔄 Cargando pedidos...");
+    
+    fetch("api/pedidos/listar_pedidos.php")
+        .then(res => {
+            console.log("📡 Status:", res.status);
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log("📦 Datos recibidos:", data);
+            
+            const tabla = document.getElementById("tablaPedidos");
+            const tbody = tabla ? tabla.querySelector("tbody") : null;
+            
+            if (!tbody) {
+                console.error("❌ No se encontró tbody de tablaPedidos");
+                return;
+            }
+
+            tbody.innerHTML = "";
+            
+            if (Array.isArray(data) && data.length > 0) {
+                data.forEach(pedido => {
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-gray-50";
+                    
+                    // Crear celdas correctamente ordenadas
+                    tr.innerHTML = `
+                        <td class="p-3 font-semibold">PED-${String(pedido.idpedi).padStart(6, '0')}</td>
+                        <td class="p-3">${pedido.nombrecliente}</td>
+                        <td class="p-3">${pedido.pro_nombre}</td>
+                        <td class="p-3 text-center font-semibold">${pedido.cantidad}</td>
+                        <td class="p-3 text-sm">${pedido.fecha_registro}</td>
+                        <td class="p-3 text-sm">${pedido.fecha_entrega}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded text-xs ${getEstadoPedidoClass(pedido.estado)}">
+                                ${pedido.estado || 'Confirmado'}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex gap-1 justify-center">
+                                <button onclick="editarPedido(${pedido.idpedi})" 
+                                        class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="eliminarPedido(${pedido.idpedi}, '${pedido.nombrecliente}', '${pedido.pro_nombre}')" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                console.log(`✅ ${data.length} pedidos cargados correctamente`);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No hay pedidos registrados</td></tr>`;
+                console.log("ℹ️ No hay pedidos para mostrar");
+            }
+        })
+        .catch(err => {
+            console.error("❌ Error cargando pedidos:", err);
+            const tabla = document.getElementById("tablaPedidos");
+            const tbody = tabla ? tabla.querySelector("tbody") : null;
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-red-500">
+                            <div>❌ Error cargando pedidos</div>
+                            <div class="text-sm">${err.message}</div>
+                            <button onclick="cargarPedidos()" 
+                                    class="mt-2 bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600">
+                                🔄 Reintentar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+}
+
+// AGREGAR estas funciones para los botones de acción
+function editarPedido(pedidoId) {
+    alert(`Función de editar pedido ${pedidoId} - En desarrollo`);
+    console.log("✏️ Editar pedido:", pedidoId);
+}
+
+function eliminarPedido(pedidoId, cliente, producto) {
+    console.log("🗑️ Eliminando pedido:", pedidoId, cliente, producto);
+    
+    if (!confirm(`¿Está seguro de eliminar el pedido?\n\nCliente: ${cliente}\nProducto: ${producto}\nID: PED-${String(pedidoId).padStart(6, '0')}\n\n⚠️ Esta acción no se puede deshacer.`)) {
+        return;
+    }
+
+    // Mostrar indicador de carga
+    const btn = event.target;
+    const textoOriginal = btn.textContent;
+    btn.textContent = "🔄 Eliminando...";
+    btn.disabled = true;
+
+    fetch("api/pedidos/eliminar_pedido.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: pedidoId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log("📦 Respuesta eliminar:", data);
+        
+        if (data.success) {
+            mostrarNotificacion("✅ Pedido eliminado correctamente", "success");
+            cargarPedidos(); // Recargar tabla
+        } else {
+            alert("❌ Error: " + (data.error || "No se pudo eliminar el pedido"));
+        }
+    })
+    .catch(err => {
+        console.error("❌ Error eliminando pedido:", err);
+        alert("❌ Error de conexión al eliminar pedido");
+    })
+    .finally(() => {
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+    });
+}
+
+// === NUEVA FUNCIÓN PARA OPERADORES ===
+function cargarOperadoresYEstadisticas() {
+    // Inicializar el módulo de operadores
+    if (typeof inicializarOperadores === 'function') {
+        inicializarOperadores();
+    }
+    
+    // Cargar estadísticas después de un breve delay para que los datos estén disponibles
+    setTimeout(actualizarEstadisticasOperadores, 1000);
+}
+
+function actualizarEstadisticasOperadores() {
+    fetch("api/tareas/operadores.php")
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && Array.isArray(data.data)) {
+                const operadores = data.data;
+                
+                // Calcular estadísticas
+                const disponibles = operadores.filter(op => op.estado === 'disponible').length;
+                const ocupados = operadores.filter(op => op.estado === 'ocupado').length;
+                const especialidades = [...new Set(operadores.map(op => op.especialidad))].length;
+                const total = operadores.length;
+
+                // Actualizar elementos de estadísticas
+                const statElements = {
+                    'stat-disponibles': disponibles,
+                    'stat-ocupados': ocupados,
+                    'stat-especialidades': especialidades,
+                    'stat-total': total
+                };
+
+                Object.entries(statElements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value;
+                    }
+                });
+            }
+        })
+        .catch(err => console.error("Error cargando estadísticas de operadores:", err));
+}
+
+// === FUNCIONES AUXILIARES ===
+
+function getEstadoPedidoClass(estado) {
+    switch (estado?.toLowerCase()) {
+        case 'completado': return 'bg-green-100 text-green-800';
+        case 'en_produccion': return 'bg-blue-100 text-blue-800';
+        case 'confirmado': return 'bg-yellow-100 text-yellow-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function mostrarNotificacion(mensaje, tipo = 'success') {
+    const notif = document.getElementById("notificacion");
+    if (notif) {
+        notif.textContent = mensaje;
+        notif.className = `fixed bottom-20 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg text-sm z-50 ${
+            tipo === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`;
+        notif.classList.remove("hidden");
+        setTimeout(() => notif.classList.add("hidden"), 3000);
+    }
+}
+
+function cerrarSesion() {
+    if (confirm("¿Está seguro de cerrar sesión?")) {
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
+}
+
+// === EVENT LISTENERS PARA FICHAS TÉCNICAS ===
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("🚀 Configurando event listeners...");
+    
+    // === FORMULARIO CREAR FICHA ===
+    const formCrear = document.getElementById("formFicha");
+    const btnCancelarCrear = document.getElementById("btnCancelarFicha");
+
+    if (formCrear && !formCrear.dataset.configurado) {
+        console.log("📋 Configurando formulario crear ficha");
+        
+        formCrear.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            console.log("📤 Enviando nueva ficha...");
+            
+            const formData = new FormData(formCrear);
+            
+            // Log para debug
+            console.log("📦 Datos del formulario:");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            try {
+                const res = await fetch("api/fichas/crear_ficha.php", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                console.log("📡 Respuesta del servidor:", res.status);
+                
+                const result = await res.json();
+                console.log("📦 Resultado:", result);
+                
+                if (result.success) {
+                    mostrarNotificacion("✅ Ficha registrada correctamente", "success");
+                    formCrear.reset();
+                    document.getElementById("formFichaModal").classList.add("hidden");
+                    document.getElementById("formFichaModal").classList.remove("flex");
+                    
+                    // Recargar fichas después de un pequeño delay
+                    setTimeout(() => {
+                        cargarFichasTecnicas();
+                    }, 500);
+                } else {
+                    console.error("❌ Error del servidor:", result.error);
+                    alert("Error: " + (result.error || "Error desconocido"));
+                }
+            } catch (err) {
+                console.error("❌ Error de conexión:", err);
+                alert("Error de conexión con el servidor");
+            }
+        });
+        
+        formCrear.dataset.configurado = "true";
+    }
+
+    if (btnCancelarCrear) {
+        btnCancelarCrear.addEventListener("click", () => {
+            console.log("❌ Cancelando creación de ficha");
+            document.getElementById("formFichaModal").classList.add("hidden");
+            document.getElementById("formFichaModal").classList.remove("flex");
+        });
+    }
+
+    // === FORMULARIO EDITAR FICHA ===
+    const formEditar = document.getElementById("formEditarFicha");
+    const btnCancelarEditar = document.getElementById("btnCancelarEditarFicha");
+
+    if (formEditar && !formEditar.dataset.configurado) {
+        console.log("✏️ Configurando formulario editar ficha");
+        
+        formEditar.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            console.log("📤 Enviando edición de ficha...");
+            
+            const formData = new FormData(formEditar);
+            
+            // Log para debug
+            console.log("📦 Datos de edición:");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            try {
+                const res = await fetch("api/fichas/editar_ficha.php", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                console.log("📡 Respuesta del servidor:", res.status);
+                
+                const result = await res.json();
+                console.log("📦 Resultado edición:", result);
+                
+                if (result.success) {
+                    mostrarNotificacion("✅ Ficha actualizada correctamente", "success");
+                    formEditar.reset();
+                    document.getElementById("formEditarFichaModal").classList.add("hidden");
+                    document.getElementById("formEditarFichaModal").classList.remove("flex");
+                    
+                    // Recargar fichas después de un pequeño delay
+                    setTimeout(() => {
+                        cargarFichasTecnicas();
+                    }, 500);
+                } else {
+                    console.error("❌ Error del servidor:", result.error);
+                    alert("Error: " + (result.error || "Error desconocido al actualizar"));
+                }
+            } catch (err) {
+                console.error("❌ Error de conexión:", err);
+                alert("Error de conexión con el servidor al actualizar");
+            }
+        });
+        
+        formEditar.dataset.configurado = "true";
+    }
+
+    if (btnCancelarEditar) {
+        btnCancelarEditar.addEventListener("click", () => {
+            console.log("❌ Cancelando edición de ficha");
+            document.getElementById("formEditarFichaModal").classList.add("hidden");
+            document.getElementById("formEditarFichaModal").classList.remove("flex");
+        });
+    }
+
+    // === PERFIL DE USUARIO ===
+    const btnVerPerfil = document.getElementById("btn-ver-perfil");
+    if (btnVerPerfil) {
+        btnVerPerfil.addEventListener("click", () => {
+            const perfilDiv = document.getElementById("perfil-info");
+            if (perfilDiv) {
+                perfilDiv.style.display = perfilDiv.style.display === "none" ? "block" : "none";
+            }
+        });
+    }
+});
+
+function descargarReportePedido(id, producto, cantidad, estado, operadoras) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Fondo amarillo suave
+    doc.setFillColor(255, 255, 204); // amarillo pastel
+    doc.rect(0, 0, 210, 297, 'F'); // tamaño A4 completo
+
+    doc.setFontSize(18);
+    doc.setTextColor(33, 33, 33);
+    doc.text("📄 REPORTE DE PRODUCCIÓN - PEDIDO", 14, 20);
+
+    doc.setFontSize(12);
+
+    // Datos generales (bloque 1)
+    doc.setDrawColor(0);
+    doc.setFillColor(255, 255, 230);
+    doc.rect(14, 30, 182, 32, 'FD');
+    doc.text(` Pedido: ${id}`, 18, 38);
+    doc.text(` Producto: ${producto}`, 18, 46);
+    doc.text(` Fecha: ${new Date().toLocaleDateString()}`, 130, 38);
+    doc.text(` Cantidad: ${cantidad}`, 130, 46);
+
+    // Bloque 2: estado y operadores
+    doc.rect(14, 68, 182, 24, 'FD');
+    doc.text(` Estado de Producción: ${estado}`, 18, 76);
+    doc.text(` Operadoras: ${operadoras || 'N/D'}`, 18, 84);
+
+    // Bloque 3: tabla estilo ficha técnica
+    doc.autoTable({
+        startY: 100,
+        head: [['Campo', 'Valor']],
+        body: [
+            ['Nombre del Producto', producto],
+            ['Cantidad Solicitada', cantidad],
+            ['Estado Actual', estado],
+            ['Fecha de Generación', new Date().toLocaleString()],
+            ['Operadoras asignadas', operadoras || 'N/D']
+        ],
+        styles: {
+            fillColor: [255, 255, 230],
+            textColor: 33,
+            halign: 'left'
+        },
+        headStyles: {
+            fillColor: [255, 204, 102],
+            textColor: 0,
+            fontStyle: 'bold'
+        },
+        margin: { left: 14, right: 14 }
+    });
+
+    doc.save(`reporte_${id}.pdf`);
+}
+
+// === INICIALIZACIÓN ===
+
+// Mostrar sección inicial según jerarquía
+const seccionInicial = jerarquia === "2" ? "asignacion" : "resumen";
+mostrarSeccion(seccionInicial);
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof cargarProductos === 'function') {
+    cargarProductos();
+  } else {
+    console.error("La función cargarProductos no está definida.");
+  }
+});
+</script></body>
+</html>

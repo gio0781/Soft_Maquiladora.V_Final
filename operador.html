@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel de Operadora - Sistema de Producción</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f9f9f9;
+      font-family: 'Poppins', sans-serif;
+      color: #111;
+    }
+
+    .neumorphism {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 10px 10px 30px #d1d9e6, -10px -10px 30px #ffffff;
+    }
+
+    .btn-neumorph {
+      background: #ffffff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 5px 5px 15px #d1d9e6, -5px -5px 15px #ffffff;
+      transition: 0.3s ease;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .btn-neumorph:hover {
+      box-shadow: inset 5px 5px 15px #d1d9e6, inset -5px -5px 15px #ffffff;
+    }
+
+    .btn-neumorph:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-warning {
+      background: #fbbf24;
+      color: white;
+      box-shadow: 5px 5px 15px #d1d9e6, -5px -5px 15px #ffffff;
+    }
+
+    .btn-warning:hover {
+      background: #f59e0b;
+      box-shadow: inset 5px 5px 15px #d1d9e6, inset -5px -5px 15px #ffffff;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+      box-shadow: 5px 5px 15px #d1d9e6, -5px -5px 15px #ffffff;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      box-shadow: inset 5px 5x 15px #d1d9e6, inset -5px -5px 15px #ffffff;
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      min-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.35s;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+  <!-- Contenedor de notificaciones -->
+  <div id="notificaciones" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+  <header class="neumorphism p-6 mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold">Panel de Operadora</h1>
+        <p class="text-sm text-gray-500">Bienvenida, <span id="nombreOperaria" class="font-semibold">Operadora</span></p>
+        <p class="text-sm text-gray-500 flex items-center"><i class="fas fa-clock mr-2"></i><span id="fechaHora">--:--</span></p>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Cronómetro -->
+        <div class="text-center">
+          <div class="text-2xl font-mono font-bold text-blue-600" id="cronometro">00:00:00</div>
+          <div class="text-xs text-gray-500">Tiempo trabajado</div>
+        </div>
+        <!-- Estado de la operadora -->
+        <div class="relative">
+          <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
+            <i class="fas fa-user text-gray-600"></i>
+          </div>
+          <div id="statusIndicator" class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
+        </div>
+        <button onclick="cerrarSesion()" class="btn-neumorph"><i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="space-y-6">
+    <!-- Mi Tarea Actual -->
+    <section class="neumorphism p-6">
+      <h2 class="text-xl font-semibold mb-4 flex items-center">
+        <i class="fas fa-tasks mr-2 text-blue-600"></i>Mi Tarea Actual
+      </h2>
+      <div id="contenido-tarea" class="text-sm text-gray-700">
+        <div class="animate-pulse text-center py-6">
+          <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+          <p>Cargando información de la tarea...</p>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- Cronómetro y Controles de Estado -->
+    <section class="neumorphism p-6">
+      <h3 class="text-lg font-semibold mb-4 flex items-center">
+        <i class="fas fa-stopwatch mr-2 text-purple-600"></i>Control de Tiempo y Estado
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onclick="iniciarCronometro()" class="btn-neumorph bg-green-600 text-white">
+          <i class="fas fa-play mr-2"></i>Iniciar Trabajo
+        </button>
+        <button onclick="pausarCronometro()" class="btn-neumorph bg-yellow-600 text-white">
+          <i class="fas fa-pause mr-2"></i>Pausar
+        </button>
+        <button onclick="cambiarEstadoOperadora('descanso')" class="btn-neumorph btn-warning">
+          <i class="fas fa-coffee mr-2"></i>Tomar Descanso
+        </button>
+        <button onclick="detenerCronometro()" class="btn-neumorph bg-red-600 text-white">
+          <i class="fas fa-stop mr-2"></i>Finalizar Jornada
+        </button>
+      </div>
+    </section>
+
+    <!-- Acciones de Tarea -->
+    <section class="flex justify-center gap-4" id="acciones-tarea" style="display: none;">
+      <button class="btn-neumorph btn-success" onclick="completarTarea()">
+        <i class="fas fa-check mr-2"></i>Completar Tarea
+      </button>
+    </section>
+
+    <!-- Fichas Técnicas -->
+    <section class="neumorphism p-6">
+      <h2 class="text-xl font-semibold mb-4 flex items-center">
+        <i class="fas fa-clipboard-list mr-2 text-orange-600"></i>Fichas Técnicas de Referencia
+      </h2>
+      <div id="carousel-track" class="grid md:grid-cols-3 gap-4 text-sm text-gray-700">
+        <div class="animate-pulse text-center py-6 col-span-3">
+          <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+          <p>Cargando fichas técnicas...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // === VARIABLES GLOBALES ===
+    const nombreUsuario = localStorage.getItem("nombreUsuario") || "Operadora";
+    let tareaActual = null;
+    let cronometroInterval = null;
+    let tiempoInicio = null;
+    let tiempoAcumulado = 0;
+
+    // === INICIALIZACIÓN ===
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("nombreOperaria").textContent = nombreUsuario;
+      actualizarFechaHora();
+      setInterval(actualizarFechaHora, 60000);
+      cargarTarea();
+      cargarFichasTecnicas();
+      recuperarCronometro();
+    });
+
+    // === FUNCIONES DE FECHA Y HORA ===
+    function actualizarFechaHora() {
+      const ahora = new Date();
+      const opciones = {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      };
+      document.getElementById('fechaHora').textContent = ahora.toLocaleDateString('es-MX', opciones);
+    }
+
+    // === GESTIÓN DE TAREAS ===
+    async function cargarTarea() {
+      try {
+        console.log('🔄 Cargando tarea para:', nombreUsuario);
+        const res = await fetch(`api/tareas/get_tarea_operaria.php?nombre=${encodeURIComponent(nombreUsuario)}`);
+        const data = await res.json();
+        
+        console.log('📦 Respuesta de tarea:', data);
+        
+        if (data.success && data.tarea) {
+          tareaActual = data;
+          mostrarTareaAsignada(data);
+          document.getElementById("acciones-tarea").style.display = "flex";
+        } else {
+          mostrarSinTarea();
+          document.getElementById("acciones-tarea").style.display = "none";
+        }
+      } catch (err) {
+        console.error('❌ Error cargando tarea:', err);
+        document.getElementById("contenido-tarea").innerHTML = 
+          `<div class="text-center text-red-600 py-6">
+            <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+            <p>Error cargando información de la tarea</p>
+            <button onclick="cargarTarea()" class="btn-neumorph mt-2">Reintentar</button>
+          </div>`;
+      }
+    }
+
+    function mostrarTareaAsignada(data) {
+      document.getElementById("contenido-tarea").innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-clipboard-check text-blue-600"></i>
+            <span class="font-semibold">Tarea:</span>
+            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${data.tarea}</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <i class="fas fa-info-circle text-gray-500 mt-1"></i>
+            <div>
+              <span class="font-semibold">Descripción:</span>
+              <p class="text-gray-600">${data.descripcion || 'Sin descripción especificada'}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fas fa-map-marker-alt text-green-600"></i>
+            <span class="font-semibold">Línea:</span>
+            <span>${data.linea_produccion || 'No especificada'}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fas fa-shopping-cart text-purple-600"></i>
+            <span class="font-semibold">Pedido:</span>
+            <span>${data.pedido || 'No especificado'}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fas fa-flag text-orange-600"></i>
+            <span class="font-semibold">Prioridad:</span>
+            <span class="px-2 py-1 rounded text-xs ${getPrioridadClass(data.prioridad)}">${data.prioridad || 'media'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function mostrarSinTarea() {
+      document.getElementById("contenido-tarea").innerHTML = `
+        <div class="text-center py-8">
+          <i class="fas fa-clipboard text-6xl text-gray-300 mb-4"></i>
+          <h3 class="text-lg font-semibold text-gray-600 mb-2">No hay tarea asignada</h3>
+          <p class="text-gray-500 mb-4">Actualmente no tienes ninguna tarea asignada.</p>
+          <p class="text-sm text-gray-400">Contacta a tu supervisor para obtener una nueva asignación.</p>
+          <button onclick="cargarTarea()" class="btn-neumorph mt-4">
+            <i class="fas fa-refresh mr-2"></i>Actualizar
+          </button>
+        </div>
+      `;
+    }
+
+    function getPrioridadClass(prioridad) {
+      switch (prioridad?.toLowerCase()) {
+        case 'alta': return 'bg-red-100 text-red-800';
+        case 'media': return 'bg-yellow-100 text-yellow-800';
+        case 'baja': return 'bg-green-100 text-green-800';
+        default: return 'bg-gray-100 text-gray-800';
+      }
+    }
+
+    // === FUNCIONES DE ACCIÓN DE TAREAS ===
+    async function completarTarea() {
+      if (!tareaActual || !tareaActual.tarea) {
+        mostrarNotificacion("No hay tarea activa para completar", 'error');
+        return;
+      }
+
+      if (!confirm("¿Confirmar que la tarea ha sido completada?")) return;
+
+      try {
+        const res = await fetch("api/operadoras/completar_tarea.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            nombre: nombreUsuario, 
+            tarea_id: tareaActual.id 
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          mostrarNotificacion("¡Tarea completada exitosamente!", 'success');
+          cargarTarea(); // Recargar para obtener nueva tarea
+        } else {
+          mostrarNotificacion("Error: " + (data.error || "No se pudo completar la tarea"), 'error');
+        }
+      } catch (err) {
+        console.error('❌ Error completando tarea:', err);
+        mostrarNotificacion("Error de conexión al completar tarea", 'error');
+      }
+    }
+
+    // === CRONÓMETRO ===
+    function recuperarCronometro() {
+      const tiempoGuardado = localStorage.getItem(`tiempo_${nombreUsuario}`);
+      const cronometroActivo = localStorage.getItem(`cronometro_activo_${nombreUsuario}`);
+      
+      if (tiempoGuardado) {
+        tiempoAcumulado = parseInt(tiempoGuardado);
+        actualizarCronometroDisplay();
+        
+        if (cronometroActivo === 'true') {
+          const tiempoInicioGuardado = localStorage.getItem(`tiempo_inicio_${nombreUsuario}`);
+          if (tiempoInicioGuardado) {
+            tiempoInicio = parseInt(tiempoInicioGuardado);
+            iniciarCronometro(false);
+          }
+        }
+      }
+    }
+
+    function iniciarCronometro(mostrarNotif = true) {
+      if (!cronometroInterval) {
+        if (!tiempoInicio) {
+          tiempoInicio = Date.now() - tiempoAcumulado;
+          localStorage.setItem(`tiempo_inicio_${nombreUsuario}`, tiempoInicio.toString());
+        }
+        
+        cronometroInterval = setInterval(actualizarCronometro, 1000);
+        localStorage.setItem(`cronometro_activo_${nombreUsuario}`, 'true');
+        
+        if (mostrarNotif) {
+          mostrarNotificacion('⏰ Cronómetro iniciado', 'success');
+        }
+      }
+    }
+
+    function pausarCronometro() {
+      if (cronometroInterval) {
+        clearInterval(cronometroInterval);
+        cronometroInterval = null;
+        
+        localStorage.setItem(`tiempo_${nombreUsuario}`, tiempoAcumulado.toString());
+        localStorage.setItem(`cronometro_activo_${nombreUsuario}`, 'false');
+        
+        mostrarNotificacion('⏸️ Cronómetro pausado', 'info');
+      }
+    }
+
+    async function detenerCronometro() {
+      if (cronometroInterval) {
+        clearInterval(cronometroInterval);
+        cronometroInterval = null;
+      }
+
+      if (tiempoAcumulado > 0) {
+        await guardarTiempoTrabajado();
+      }
+
+      tiempoAcumulado = 0;
+      tiempoInicio = null;
+      localStorage.removeItem(`tiempo_${nombreUsuario}`);
+      localStorage.removeItem(`cronometro_activo_${nombreUsuario}`);
+      localStorage.removeItem(`tiempo_inicio_${nombreUsuario}`);
+      
+      actualizarCronometroDisplay();
+      mostrarNotificacion('✅ Jornada finalizada y tiempo registrado', 'success');
+    }
+
+    function actualizarCronometro() {
+      if (tiempoInicio) {
+        tiempoAcumulado = Date.now() - tiempoInicio;
+        actualizarCronometroDisplay();
+        
+        if (tiempoAcumulado % 60000 < 1000) {
+          localStorage.setItem(`tiempo_${nombreUsuario}`, tiempoAcumulado.toString());
+        }
+      }
+    }
+
+    function actualizarCronometroDisplay() {
+      const horas = Math.floor(tiempoAcumulado / 3600000);
+      const minutos = Math.floor((tiempoAcumulado % 3600000) / 60000);
+      const segundos = Math.floor((tiempoAcumulado % 60000) / 1000);
+
+      const tiempoFormateado = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+      document.getElementById('cronometro').textContent = tiempoFormateado;
+    }
+
+    async function guardarTiempoTrabajado() {
+      try {
+        await fetch('api/operadoras/guardar_tiempo.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombreUsuario,
+            tiempo_ms: tiempoAcumulado,
+            fecha: new Date().toISOString().split('T')[0]
+          })
+        });
+      } catch (error) {
+        console.error('❌ Error guardando tiempo:', error);
+      }
+    }
+
+    // === CAMBIO DE ESTADO ===
+    async function cambiarEstadoOperadora(nuevoEstado) {
+      try {
+        const res = await fetch('api/operadoras/cambiar_estado.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombreUsuario,
+            estado: nuevoEstado
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          mostrarNotificacion(`✅ ${data.message}`, 'success');
+          
+          if (nuevoEstado === 'descanso') {
+            pausarCronometro();
+          }
+        } else {
+          mostrarNotificacion('❌ ' + (data.error || 'Error al cambiar estado'), 'error');
+        }
+      } catch (error) {
+        console.error('❌ Error cambiando estado:', error);
+        mostrarNotificacion('❌ Error de conexión', 'error');
+      }
+    }
+
+    // === FICHAS TÉCNICAS ===
+    async function cargarFichasTecnicas() {
+      try {
+        const res = await fetch("api/fichas/get_fichas.php");
+        const data = await res.json();
+        const track = document.getElementById("carousel-track");
+        
+        if (Array.isArray(data) && data.length > 0) {
+          track.innerHTML = data.map(ficha => `
+            <div class='neumorphism p-4'>
+              <img src="${ficha.foto}" alt="${ficha.nombre}" 
+                   class="w-full h-48 object-cover rounded mb-3" 
+                   onerror="this.src='img/placeholder.jpg'">
+              <h3 class='font-semibold mb-2'>${ficha.nombre}</h3>
+              <p class="text-xs text-gray-600 mb-2">${ficha.descripcion}</p>
+              <div class="text-xs text-gray-500 space-y-1">
+                <p><strong>Botones:</strong> ${ficha.boton}</p>
+                <p><strong>Cierres:</strong> ${ficha.cierre}</p>
+                <p><strong>Hilos:</strong> ${ficha.hilo}</p>
+                <p><strong>SKU:</strong> ${ficha.sku}</p>
+              </div>
+            </div>
+          `).join("");
+        } else {
+          track.innerHTML = "<p class='text-center col-span-3 text-gray-500'>No hay fichas técnicas disponibles</p>";
+        }
+      } catch (err) {
+        console.error('❌ Error cargando fichas:', err);
+        document.getElementById("carousel-track").innerHTML = 
+          "<p class='text-red-500 col-span-3 text-center'>Error cargando fichas técnicas</p>";
+      }
+    }
+
+    // === SISTEMA DE NOTIFICACIONES ===
+    function mostrarNotificacion(mensaje, tipo = 'info', duracion = 5000) {
+      const contenedor = document.getElementById('notificaciones');
+      const notificacion = document.createElement('div');
+      
+      const colores = {
+        info: 'bg-blue-500',
+        success: 'bg-green-500', 
+        warning: 'bg-yellow-500',
+        error: 'bg-red-500'
+      };
+
+      const iconos = {
+        info: 'fas fa-info-circle',
+        success: 'fas fa-check-circle',
+        warning: 'fas fa-exclamation-triangle', 
+        error: 'fas fa-times-circle'
+      };
+
+      notificacion.className = `notification ${colores[tipo]} text-white p-4 rounded-lg shadow-lg max-w-sm mb-2`;
+      notificacion.innerHTML = `
+        <div class="flex items-start">
+          <i class="${iconos[tipo]} mr-3 mt-1"></i>
+          <div class="flex-1">
+            <span>${mensaje}</span>
+          </div>
+          <button onclick="this.parentElement.parentElement.remove()" 
+                  class="ml-2 text-white hover:text-gray-200 focus:outline-none">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+
+      contenedor.appendChild(notificacion);
+
+      // Auto-eliminar después del tiempo especificado
+      setTimeout(() => {
+        if (notificacion.parentElement) {
+          notificacion.remove();
+        }
+      }, duracion);
+    }
+
+    // === UTILIDADES ===
+    function cerrarSesion() {
+      if (confirm("¿Está seguro de cerrar sesión?")) {
+        // Guardar tiempo actual antes de cerrar
+        if (tiempoAcumulado > 0) {
+          localStorage.setItem(`tiempo_${nombreUsuario}`, tiempoAcumulado.toString());
+          localStorage.setItem(`cronometro_activo_${nombreUsuario}`, cronometroInterval ? 'true' : 'false');
+          if (tiempoInicio) {
+            localStorage.setItem(`tiempo_inicio_${nombreUsuario}`, tiempoInicio.toString());
+          }
+        }
+        
+        localStorage.removeItem("jerarquiaUsuario");
+        localStorage.removeItem("nombreUsuario");
+        window.location.href = "index.html";
+      }
+    }
+
+    // === ACTUALIZACIÓN AUTOMÁTICA ===
+    // Actualizar tarea cada 2 minutos
+    setInterval(() => {
+      if (tareaActual) {
+        cargarTarea();
+      }
+    }, 120000);
+
+    // Verificar notificaciones cada 30 segundos
+    setInterval(async () => {
+      try {
+        const res = await fetch(`api/operadoras/get_notificaciones.php?nombre=${encodeURIComponent(nombreUsuario)}`);
+        const data = await res.json();
+        
+        if (data.success && data.notificaciones && data.notificaciones.length > 0) {
+          data.notificaciones.forEach(notif => {
+            if (!notif.leida) {
+              mostrarNotificacion(
+                `${notif.titulo}: ${notif.mensaje}`, 
+                notif.tipo || 'info',
+                8000
+              );
+            }
+          });
+        }
+      } catch (error) {
+        // Error silencioso para notificaciones
+        console.debug('Error verificando notificaciones:', error);
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

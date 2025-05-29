@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba API Reabastecimiento</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 10px 0; }
+        button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        pre { background: #333; color: #fff; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Prueba API Reabastecimiento</h1>
+    
+    <div class="container">
+        <h3>Prueba 1: GET (Ver información)</h3>
+        <button onclick="testGet()">Probar GET</button>
+        <pre id="get-result">Haz clic para probar...</pre>
+    </div>
+
+    <div class="container">
+        <h3>Prueba 2: POST (Enviar datos)</h3>
+        <button onclick="testPost()">Probar POST</button>
+        <pre id="post-result">Haz clic para probar...</pre>
+    </div>
+
+    <script>
+        // Cambia esta URL por la de tu dominio
+        const API_URL = 'api/inventario/reabastecer_material.php';
+
+        async function testGet() {
+            const resultEl = document.getElementById('get-result');
+            resultEl.innerHTML = 'Probando GET...';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                resultEl.innerHTML = JSON.stringify(data, null, 2);
+                resultEl.className = response.ok ? 'success' : 'error';
+                
+            } catch (error) {
+                resultEl.innerHTML = 'Error: ' + error.message;
+                resultEl.className = 'error';
+            }
+        }
+
+        async function testPost() {
+            const resultEl = document.getElementById('post-result');
+            resultEl.innerHTML = 'Probando POST...';
+            
+            // Datos de prueba
+            const formData = new FormData();
+            formData.append('id_material', '1');
+            formData.append('cantidad', '10');
+            formData.append('fecha_reabastecimiento', '2025-05-23');
+            formData.append('proveedor', 'Proveedor Test');
+            formData.append('costo_unitario', '15.50');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                resultEl.innerHTML = JSON.stringify(data, null, 2);
+                resultEl.className = response.ok ? 'success' : 'error';
+                
+            } catch (error) {
+                resultEl.innerHTML = 'Error: ' + error.message;
+                resultEl.className = 'error';
+            }
+        }
+    </script>
+</body>
+</html>
